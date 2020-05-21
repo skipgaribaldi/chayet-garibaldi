@@ -1,0 +1,131 @@
+///////////////////////////////////////////////////////////////
+//
+// For a commutative non-associative algebra....
+// 		check if some polynomial identities hold
+//		check if monomials of a certain degree are linearly independent
+//
+//     in support of a paper by Maurice Chayet & Skip Garibaldi
+//
+// version of 5/14/2020
+//
+/////////////////////////////////////////////////////////////////
+
+// add parentheses around a string
+function addparens0(str);
+	// expects a string
+	if #str eq 1 then
+		return str;
+	end if;
+	return "(" cat str cat ")";
+end function;
+
+// add parentheses around every string in a list
+function addparens(lst);
+	// expects a list of strings
+	return [addparens0(str) : str in lst];
+end function;
+
+
+// return a list of all commutative, non-associative products of a given degree,
+// as a string where e = identity element and x = generic element
+function AllProds(len);
+	if len lt 1 then
+		return ["e"];
+	elif len eq 1 then 
+		return ["x"];
+	elif len eq 2 then
+		return ["x*x"];
+	end if;
+
+	assert len ge 3;
+	rval := [];
+	for i in [1..Floor(len/2)] do
+		first := addparens(AllProds(i));
+		second := addparens(AllProds(len - i));
+		if 2*i lt len then
+			for pre in first do
+				for post in second do
+					Append(~rval, pre cat "*" cat post);
+				end for;
+			end for;
+		else // 2*i == len
+			assert #first eq #second;
+			for j in [1..#first] do
+				for k in [j..#first] do
+					Append(~rval, first[j] cat "*" cat first[k]);
+				end for;
+			end for;
+		end if;
+	end for;
+
+	return rval;
+end function;
+
+// list all the commutative, non-associative monomials of a given degree
+procedure showids(max_deg);
+	for i in [0..max_deg] do
+		ids := AllProds(i);
+		print "**** Degree ", i;
+		print "Found ", #ids, " monomials of degree ", i; 
+
+		// compare https://oeis.org/A001190
+		vals := [ 1, 1, 1, 2, 3, 6, 11, 23, 46, 98, 207, 451, 983, 2179, 4850, 10905, 24631, 56011, 127912, 293547, 676157, 1563372, 3626149, 8436379, 19680277 ];
+		if i ge 1 and i le #vals then
+			assert vals[i] eq #ids;
+		end if;
+
+		print ids;
+		print "\n";
+	end for;
+end procedure;
+
+// evaluate the monomials and return: are they independent?, matrix of values
+// arguments: e = identity, x = some other element, ids = list of mononmials to evaluate
+function check_ids0(e, x, ids);
+	vals := [Vector(eval(id)) : id in ids];
+
+	return IsIndependent(vals), vals;
+end function;
+
+// check if a list of monomials are linearly independent and print messages to say so
+// arguments: e = identity, x = some other element, ids = list of mononmials to evaluate
+function check_ids1(e, x, ids);
+	if #ids gt Dimension(Parent(x)) then
+		printf "    *** Number of monomials (%o) is greater than the dimension of the algebra (%o)\n", #ids, Dimension(Parent(x));
+		return false;
+	end if;
+
+	indep, vals := check_ids0(e, x, ids);
+	printf info_str cat "Checking for dependence among %o terms\n", #ids;
+	if indep then
+		print info_str cat info_str cat "No relation found\n";
+		return false;
+	end if;
+
+	//	else
+	rk := Rank(Matrix(vals));
+	printf warn_str cat "!!! relation found !!!  Rank is %o, a deficiency of %o\n\n", rk, #ids - rk;
+	return true;
+end function;
+
+// check for identities involving all monomials of a specific degree
+function check_ids_deg(e, x, deg);
+	print "Checking degree = ", deg;
+	return check_ids1(e, x, AllProds(deg));
+end function;
+
+// check for identities involving all monomials up to some degree
+function check_ids(e, x, max_deg);
+	ids := [ "e", "x"];
+	rval := false;
+	for deg in [2..max_deg] do
+		if not(rval) then
+			print "Checking degree ", deg;
+		end if;
+		ids := ids cat AllProds(deg);
+		rval := rval or check_ids1(e, x, ids); // this short circuits if rval is already true ?
+	end for;
+
+	return rval;
+end function;
+

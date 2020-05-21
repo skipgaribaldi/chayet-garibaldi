@@ -1,0 +1,168 @@
+///////////////////////////////////////////////////////////////
+//
+// For a commutative non-associative algebra....
+// 		check degree 5 identities from Osborn, "Identities of nonassociative algebras", pp.86, 87
+//      plus a version from a paper by Cattaneo
+// Actually, we check something less precise.  The papers contain an assertion that a linear 
+// combination of certain terms equals zero.  We check the weaker condition: are the terms are linearly dependent?
+//
+//     in support of a paper by Maurice Chayet & Skip Garibaldi
+//
+// version of 5/14/2020
+//
+/////////////////////////////////////////////////////////////////
+
+// return the dimension of the span of a list of elements in a common vector space
+function DimSpan(lst);
+	mat := Matrix([Eltseq(elt) : elt in lst]);
+	return Rank(mat);
+end function;
+
+// given a list of elements in a vector space, are they linearly independent ?
+function AreLinearlyIndependent(lst);
+	return DimSpan(lst) eq #lst;
+end function;
+
+
+// each routine takes as input a list of up to 3 elements in the same algebra
+// each routine returns a list of elements, which should be checked for linear dependence
+
+// power associativity
+function checkPA(lst);
+	x := lst[1];
+	return [(x*x)*(x*x), x*(x*(x*x))];
+end function;
+
+// starting with identities from Osborn, numbered as in his paper
+function check7(lst);
+	x := lst[1];
+	y := lst[2];
+	x2 := x*x;
+	x3 := x2*x;
+	xy := x*y;
+	return [2*(xy*x)*x + y*x3, -3*(y*x2)*x];
+end function;
+
+function check8(lst);
+	x := lst[1];
+	y := lst[2];
+	x2 := x*x;
+	x3 := x2*x;
+	xy := x*y;
+	y2 := y*y;
+	return [2*(y2*x)*x, -2*(xy*y)*x, -2*(xy*x)*y, 2*(x2*y)*y, -x2*y2, xy*xy];
+end function;
+
+function check12(lst);
+	x := lst[1];
+	x2 := x*x;
+	x3 := x2*x;
+	x4 := x3*x;
+	return [2*x4*x, - 3*(x2*x2)*x, x3*x2];
+end function;
+
+
+function check13(lst);
+	x := lst[1];
+	y := lst[2];
+	x2 := x*x;
+	x3 := x2*x;
+	x4 := x3*x;
+	y2 := y*y;
+	xy := x*y;
+	b1 := y*x4 - 4*(y*x3)*x + 6*((y*x2)*x)*x - 3*((xy*x)*x)*x;
+	b2 := -y*(x2*x2) + 5*(y*x3)*x - 9*((y*x2)*x)*x + 4*((xy*x)*x)*x + (xy*x2)*x + (y*x2)*x2 - xy*x3;
+	b3 := ((y*x2)*x)*x - ((xy*x)*x)*x - (y*x2)*x2 + (xy*x)*x2;
+	return [b1, b2, b3];
+end function;
+
+function check14(lst);
+	x := lst[1];
+	y := lst[2];
+	x2 := x*x;
+	x3 := x2*x;
+	y2 := y*y;
+	xy := x*y;
+	g1 := ((xy*x)*y)*x - ((xy*x)*x)*y - ((y*x2)*y)*x + ((y*x2)*x)*y;
+	g2 := -((y2*x)*x)*x + ((xy*y)*x)*x + ((xy*x)*x)*y - ((y*x2)*x)*y + (y2*x)*x2 - (xy*y)*x2 - (xy*x)*xy + (x2*y)*xy;
+	g3 := 4*((y2*x)*x)*x - 6*((xy*y)*x)*x - 2*((xy*x)*x)*y + 2*((y*x2)*y)*x + 4*((y*x2)*x)*y - 2*(y*x3)*y - 4*(y2*x2)*x + 4*(xy*xy)*x + (y2*x)*x2 - 2*(xy*x)*xy + y2*x3;
+	return [g1, g2, g3];
+end function;
+
+function check15(lst);
+	x := lst[1];
+	y := lst[2];
+	z := lst[3];
+	x2 := x*x;
+	x3 := x2*x;
+	y2 := y*y;
+	xy := x*y;
+	xz := x*z;
+	yz := y*z;
+	d1 := ((xy*x)*z)*x - ((xz*x)*y)*x - ((xy*x)*x)*z + ((xz*x)*x)*y - ((y*x2)*z)*x + ((z*x2)*y)*x + ((y*x2)*x)*z - ((z*x2)*x)*y;
+	d2 := ((xy*z)*x)*x - ((xz*y)*x)*x - ((xy*x)*x)*z + ((xz*x)*x)*y + ((x2*y)*x)*z - ((z*x2)*x)*y - (xy*z)*x2 + (xz*y)*x2 + (xy*x)*(xz) - (xz*x)*(xy) - (y*x2)*xz + (z*x2)*xy;
+	return [d1, d2];
+end function;
+
+function check16(lst);
+	x := lst[1];
+	y := lst[2];
+	z := lst[3];
+	x2 := x*x;
+	x3 := x2*x;
+	y2 := y*y;
+	xy := x*y;
+	xz := x*z;
+	yz := y*z;
+	e1 := ((yz*y)*x)*x + ((xz*x)*y)*y - ((y2*z)*x)*x + ((xy*z)*y)*x + ((xy*z)*x)*y - ((x2*z)*y)*y - (yz*y)*x2 + (yz*x)*xy + (xz*y)*xy - (xz*x)*y2 + (y2*z)*x2 - 2*(xy*z)*xy + (x2*z)*y2 - (y2*x)*xz + (xy*y)*xz + (xy*x)*yz - (x2*y)*yz;
+	e2 := ((yz*x)*y)*x + ((xz*y)*x)*y - ((y2*x)*z)*x + ((xy*y)*z)*x + ((xy*x)*z)*y - ((x2*y)*z)*y;
+	e3 := ((yz*x)*x)*y + ((xz*y)*y)*x - ((y2*x)*x)*z + ((xy*y)*x)*z + ((xy*x)*y)*z - ((x2*y)*y)*z;
+	return [e1, e2, e3];
+end function;
+
+// This is a polynomial identity from Cattaneo
+function checkCat(lst);
+	x := lst[1];
+	y := lst[2];
+	z := lst[3];
+	x2 := x*x;
+	x3 := x2*x;
+	y2 := y*y;
+	xy := x*y;
+	xz := x*z;
+	yz := y*z;
+	e1 := ((yz*y)*x)*x + ((xz*x)*y)*y - ((y2*z)*x)*x + ((xy*z)*y)*x + ((xy*z)*x)*y - ((x2*z)*y)*y - (yz*y)*x2 + (yz*x)*xy + (xz*y)*xy - (xz*x)*y2 + (y2*z)*x2 - 2*(xy*z)*xy + (x2*z)*y2 - (y2*x)*xz + (xy*y)*xz + (xy*x)*yz - (x2*y)*yz;
+	e2 := ((yz*x)*y)*x + ((xz*y)*x)*y - ((y2*x)*z)*x + ((xy*y)*z)*x + ((xy*x)*z)*y - ((x2*y)*z)*y;
+	e3 := ((yz*x)*x)*y + ((xz*y)*y)*x - ((y2*x)*x)*z + ((xy*y)*x)*z + ((xy*x)*y)*z - ((x2*y)*y)*z;
+
+	// this is the middle term from Table 1 in Cattaneo
+	e4 := (x2*y2)*z - (xy*xy)*z - (x2*yz)*y + (xy*xz)*y + (xy*yz)*x - (xz*y2)*x;
+
+	return [e1, e2, e3, e4];
+end function;
+
+// check all the identities above, in one function
+// argument is an algebra A
+procedure check_PIs(A);
+	lst := [randelt(A) : i in [1..3]];
+	tests := [ 
+		[* checkPA(lst), "power associativity" *],
+		[* check7(lst), "Osborn's identity (7)" *],
+		[* check8(lst), "Osborn's identity (8)" *],
+		[* check12(lst), "Osborn's identity (12)" *],
+		[* check13(lst), "Osborn's identity (13)" *],
+		[* check14(lst), "Osborn's identity (14)" *],
+		[* check15(lst), "Osborn's identity (15)" *],
+		[* check16(lst), "Osborn's identity (16)" *],
+		[* checkCat(lst), "Cattaneo's identity" *]
+	];	
+
+	for test in tests do
+		printf "%o ... ", test[2];
+		if AreLinearlyIndependent(test[1]) then
+			printf "failed\n";
+		else
+			printf "may hold\n";
+		end if;
+	end for;
+end procedure;

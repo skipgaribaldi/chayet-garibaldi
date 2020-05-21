@@ -1,0 +1,300 @@
+///////////////////////////////////////////////////////////////
+//
+// Magma code for computing the algebra A(g) for g a simple Lie algebra
+//
+//     in support of a paper by Maurice Chayet & Skip Garibaldi
+//
+// version of 5/14/2020
+//
+// Expect to have defined:
+//    KC = string, the Killing-Cartan type of the Lie algebra g, e.g., "G2" or "D4"
+//    F = field of definition of Lie algebra g
+// construction = 1 to do the general construction from section 4, 2 to do construction #2 from section 9
+// 
+// After this, construct the algebra A(g)
+//
+//
+// For an example use, see "example.magma";
+//
+/////////////////////////////////////////////////////////////////
+//
+// Most of this code was written in November 2017 and July 2019
+//
+/////////////////////////////////////////////////////////////////
+
+load "generic-routines.magma"; // generic functions for any Magma program
+load "randelt.magma"; // can make random elements of an algebra over Q, e.g.
+load "dual-coxeter.magma"; // dual Coxeter number and other data
+
+// check that KC, etc., meet some basic criteria
+key := KC;  // a common typo
+
+// check the characteristic hypothesis from the paper
+assert (Characteristic(F) eq 0) or (Characteristic(F) gt h_array[key] + 1);
+
+if construction eq 2 then
+	assert KC in ["A2", "G2", "F4", "E6", "E7"]; // See Proposition 9.4
+end if;
+
+printf "g is a simple Lie algebra of type %o over the %o\n", key, F;
+g := LieAlgebra(key, F : Isogeny := "SC"); 
+R := RootDatum(g);
+hv := hvee_array[key];
+hvee := hv; // common typo
+exp_dim := exp_dim_array[key] +1; // expected dimension of the constructed algebra A(g)
+
+basis := Basis(g);
+d := #basis;
+
+// the basis for the adjoint representation, according ot Magma, is different from the basis for g
+// so here we give the matrix according to g
+function ad(X);
+	return Matrix([b*X : b in basis]);
+end function;
+
+stock_ad := AdjointRepresentation(g);
+
+gram_matrix := Matrix(F, KillingMatrix(g));
+gram_comatrix := gram_matrix^(-1);
+
+cobasis := [gram_comatrix[i] : i in [1..d]];
+
+// it takes two elements of g and gives a scalar
+function K(x, y);
+	return (Matrix(F, x)*gram_matrix*Transpose(Matrix(y)))[1,1];
+end function;
+
+// --------- some asserts
+X := randelt(g);
+assert ad(X) eq Matrix(stock_ad(X));
+
+for i in [1..#basis] do
+	assert basis[i]*X eq ad(X)[i];
+end for;
+
+Y := randelt(g);
+assert Y eq &+[Y[i]*basis[i] : i in [1..#basis]];
+
+okubo_alpha := 5/(2*(d+2));
+assert Trace(ad(X)^4) eq okubo_alpha * K(X,X)^2;
+// ---------
+
+
+// the Jordan product
+function jordan(T1, T2);
+	return (1/2)*(Matrix(T1)*Matrix(T2) + Matrix(T2)*Matrix(T1));
+end function;
+
+assert 2*jordan(ad(X), ad(Y)) eq ad(X)*ad(Y) + ad(Y)*ad(X);
+
+if construction eq 1 then
+	pi := ad;
+	d_pi := d;
+	mu_pi := 1;
+
+	// takes X, Y in g and returns P(X,Y) in End(g); note we act on the right
+	function oldP(X, Y);
+		return (1/2)*(gram_matrix*Transpose(Matrix(Y))*Matrix(X) + gram_matrix*Transpose(Matrix(X))*Matrix(Y));
+	end function;
+
+	function P(X,Y);
+		return (1/2)*Matrix([K(b,X)*Y + K(b,Y)*X : b in basis]);
+	end function;
+
+	assert oldP(X,Y) eq P(X,Y);
+
+	// take X, Y in g and returns S(X,Y) in End(g); note we act on the right
+	function S(X,Y);
+		return hvee*jordan(ad(X), ad(Y)) + P(X,Y);
+	end function;
+elif construction eq 2 then
+	La := pi_array[key];
+	pi := HighestWeightRepresentation(g, La);
+	d_pi := IntegerRing()!Sqrt(Dimension(Codomain(pi)));
+	mu_pi := (hvee + 1)/(hvee+6);
+
+    // takes a weight as a vector/SeqEnum and returns a weight 
+	// as a sum of roots in the root datum R
+	function vecToRoot(v);
+		return BasisChange(R, v : InBasis := "Weight", OutBasis := "Root");
+	end function;
+	La_as_root := vecToRoot(La);
+
+	// verify Okubo's lemma
+	nu := mu_pi * d_pi * (6 * mu_pi - 1) / (2 * d * (d+2));
+	assert Trace(Matrix(pi(X))^4) eq nu * K(X,X)^2;
+
+		// take X, Y in g and returns S(X,Y) in End(g); note we act on the right
+	function S(X,Y);
+		return 6*hvee*jordan(pi(X), pi(Y)) - K(X,Y)/2;
+	end function;
+end if;
+
+assert d * Trace(Matrix(pi(X))^2) eq mu_pi * d_pi * K(X, X);
+assert &+[S(basis[i], g!cobasis[i]) : i in [1..#basis]] eq (hvee+1)*IdentityMatrix(F, d_pi);
+
+
+function S2prod0(U, V, A, B); // U, V, A, B belong to g, return an element of End(g)
+	adAB := jordan(ad(A), ad(B));
+	adUV := jordan(ad(U), ad(V));
+
+	prod0 := S(U, V*adAB) + S(U*adAB, V)
+			+ S(A, B*adUV) + S(A*adUV, B);
+
+	prod1 := S(U*A, V*B) + S(U*B, V*A);
+
+	prod3 := S(K(U,A)*V,B) + S(K(U,B)*V,A)
+			+ S(K(V,A)*U,B) + S(K(V,B)*U,A);
+
+	return (hvee/2)*(prod0 + prod1) + (1/4)*prod3;
+end function;
+
+function S2prod(u, v, a, b); // u, v, a, b are indexes in to the basis of g, wrapper for S2prod0
+	return S2prod0(basis[u], basis[v], basis[a], basis[b]);
+end function;
+
+function gOnVpi(x, elt); // x in g, elt in End(V_pi)
+	act := Matrix(pi(x));
+  	return elt*act - act*elt;
+end function;
+
+// check that S2prod0 is g-invariant
+for i in [1..25] do
+	X := randelt(g);
+	Y := randelt(g);
+	U := randelt(g);
+	V := randelt(g);
+	x := randelt(g);
+	act := ad(x);
+	M := S2prod0(U*act, V, X, Y) + S2prod0(U, V*act, X, Y) + S2prod0(U, V, X*act, Y) + S2prod0(U, V, X, Y*act);
+	alt := S2prod0(U, V, X, Y);
+	assert M eq gOnVpi(x, alt);
+end for;
+
+if construction eq 1 then
+	str := "End(g)";
+elif construction eq 2 then
+	str := "End(V_pi)";
+end if;
+section("Finding a basis for the image of S in " cat str);
+
+
+// now we calculate the images
+print "Calculating the images of basis elements under S";
+elts := [ ];
+checkpoint := Realtime();
+for i in [1..d] do
+	for j in [i..d] do
+		new_elt := [* i, j, S(basis[i], basis[j]) *];
+		if new_elt[3] ne ZeroMatrix(F, d_pi, d_pi) then   // if you get the zero matrix, ignore it
+			Append(~elts, new_elt);
+		end if;
+	end for;
+	if i mod 10 eq 0 then
+		printf info_str cat "Did %o (%o%%) in %o\n", i, Round(i*100.0/d), print_time(Realtime()-checkpoint);
+	end if;
+end for;
+printf info_str cat "Done after %o\n", print_time(Realtime()-checkpoint);
+
+print "\nSubselecting a basis for the image from this list";
+indices := []; // pointers into elts
+baselts := []; // actual basis vectors in End(g)
+checkpoint := Realtime();
+for i in [1..#elts] do
+	x := elts[i][3];
+	if IsIndependent(baselts cat [x]) then
+		Append(~baselts, x);
+		Append(~indices, i);
+		if (exp_dim le 25) or (i mod 5 eq 0) then
+			printf info_str cat "Basis has %o elts of %o, after %o\n", #indices, exp_dim, print_time(Realtime()-checkpoint);
+		end if;
+	end if;
+end for;
+
+assert #indices eq exp_dim;
+printf info_str cat "Done after %o\n", print_time(Realtime()-checkpoint);
+
+basmat := VerticalJoin([Vector(elt) : elt in baselts]);
+assert Rank(basmat) eq Nrows(basmat);
+
+function EndVpiToCoords(v);
+	return Solution(basmat, Vector(v));
+end function;
+
+// now we calculate the products 
+section("Calculating the products of elements of the basis");
+
+// now we calculate the products 
+checkpoint := Realtime();
+prods := [];
+for i in [1..exp_dim] do
+	if (exp_dim le 25) or (i mod 5 eq 0) then
+		printf info_str cat "Calculating products for row %o of %o, after %o\n", i, exp_dim, print_time(Realtime()-checkpoint);
+		est := (Realtime()-checkpoint)/i*(exp_dim-i);
+		if (i mod 25 eq 0) then
+			printf info_str cat info_str cat "estimated %o remaining\n", print_time(est);
+		end if;
+	end if;
+
+	prod := [];  // this is a row
+	ind_i := elts[indices[i]];
+	for j in [1..(i-1)] do
+		Append(~prod, prods[j][i]);
+	end for;
+
+	for j in [i..exp_dim] do
+		ind_j := elts[indices[j]];
+
+		Append(~prod,  EndVpiToCoords(S2prod(ind_i[1], ind_i[2], ind_j[1], ind_j[2])));
+	end for;
+	Append(~prods, prod);
+end for;
+printf info_str cat "Done after %o\n", print_time(Realtime()-checkpoint);
+
+// construct the "structure constant algebra"
+section("Constructing the algebra A as a structure constant algebra");
+
+A := Algebra<F, exp_dim | prods>;
+assert IsCommutative(A);
+
+// move elements from End(V_pi) into A
+function EndVpiToA(x);
+	return A!Eltseq(EndVpiToCoords(x));
+end function;
+
+// move elements from A to End(V_pi)
+function AToEndVpi(a);
+	return &+[a[i]*baselts[i] : i in [1..exp_dim]];
+end function;
+
+function gOnA(x, a);
+	return EndVpiToA(gOnVpi(x, AToEndVpi(a)));
+end function;
+
+// construct the identity element
+print "Identifying identity element e";
+e := EndVpiToA(IdentityMatrix(F, d_pi));
+
+a := randelt(A);
+assert e*a eq a;
+
+assert IsOne(e);
+
+emat := AToEndVpi(e);
+assert emat eq IdentityMatrix(F,d_pi);
+
+print "Checking that the product on A is g-invariant";
+for i in [1..25] do
+	a := randelt(A);
+	b := randelt(A);
+	x := randelt(g);
+	assert gOnA(x, a*b) eq gOnA(x, a)*b + a*gOnA(x, b);
+end for;
+
+if construction eq 2 then
+	print "Checking that a certain quartic does the right thing";
+	X := randelt(g);
+	a := EndVpiToA(6*hvee*Matrix(pi(X))^2 - K(X,X)*IdentityMatrix(F, d_pi)/2);
+	assert a^2 eq K(X,X) * a;
+end if;
+

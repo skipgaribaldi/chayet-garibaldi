@@ -1,0 +1,80 @@
+///////////////////////////////////////////////////////////////
+//
+// For certain specific root systems, record some constants and hightest weights
+//
+//     in support of a paper by Maurice Chayet & Skip Garibaldi
+//
+// version of 5/14/2020
+//
+/////////////////////////////////////////////////////////////////
+
+// all types considered here, some loops will iterate over this list
+keys := ["A2", "G2", "F4", "E6", "E7", "E8"];
+
+// ------------------------------------------
+// dual Coxeter number
+hvee_array := AssociativeArray(); 
+
+hvee_array["A2"] := 3;
+hvee_array["G2"] := 4;
+hvee_array["D4"] := 2*4 - 2;
+hvee_array["F4"] := 9;
+hvee_array["E6"] := 12;
+hvee_array["E7"] := 18;
+hvee_array["E8"] := 30;
+
+// ------------------------------------------
+// Coxeter number 
+h_array := AssociativeArray();
+
+h_array["G2"] := 6;
+h_array["F4"] := 12;
+
+// ... if all roots are the same length, then hvee = h
+for key in ["A2", "D4", "E6", "E7", "E8"] do
+	h_array[key] := hvee_array[key];
+end for;
+
+
+// A(g)/k is irreducible with highest weight beta
+beta := AssociativeArray();
+beta["A2"] := [1,1];
+beta["G2"] := [2,0];
+beta["F4"] := [0,0,0,2];
+beta["E6"] := [1,0,0,0,0,1];
+beta["E7"] := [0,0,0,0,0,1,0];
+beta["E8"] := [1,0,0,0,0,0,0,0];
+
+// the highest weight of the "natural" representation
+pi_array := AssociativeArray();
+pi_array["A2"] := [1,0];
+pi_array["G2"] := [1,0];
+pi_array["F4"] := [0,0,0,1];
+pi_array["E6"] := [1,0,0,0,0,0];
+pi_array["E7"] := [0,0,0,0,0,0,1];
+pi_array["E8"] := [0,0,0,0,0,0,0,1];
+
+// the highest weight of the dual of the natural representation
+pid := AssociativeArray();
+pid["A2"] := [0,1];
+pid["E6"] := [0,0,0,0,0,1];
+for key in ["G2", "F4", "E7", "E8"] do
+	pid[key] := pi_array[key];
+end for;
+
+// dimension of the irrep with highest weight beta
+exp_dim_array := AssociativeArray();
+exp_dim_array["A2"] := 8;
+exp_dim_array["G2"] := 27;
+exp_dim_array["D4"] := 105; // actually a sum of three irreps
+exp_dim_array["F4"] := 324;
+exp_dim_array["E6"] := 650;
+exp_dim_array["E7"] := 1539;
+exp_dim_array["E8"] := 3875;
+
+// the parameter nu from Deligne-Gross 2002
+DG_nu := AssociativeArray();
+for key in keys do
+	DG_nu[key] := hvee_array[key]/6;
+end for;
+

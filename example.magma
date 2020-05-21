@@ -1,0 +1,4 @@
+KC := "G2";
+F := GF(211); 
+construction := 1; // or 2
+load "main.magma";

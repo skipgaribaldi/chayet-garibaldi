@@ -1,0 +1,27 @@
+///////////////////////////////////////////////////////////////
+//
+// Magma code for creating a "random" element of a finite-dimensional
+// vector space
+//
+//     in support of a paper by Maurice Chayet & Skip Garibaldi
+//
+// version of 5/14/2020
+//
+/////////////////////////////////////////////////////////////////
+function randvec(d); // return a random integer vector of length d
+	return [Random([-100..100]) : i in [1..d]];
+end function;
+
+function randelt(alg);
+	S := BaseRing(alg);
+
+	// if it's finite, we can use Magma's built-in Random function
+	if IsFinite(S) then 
+		return Random(alg);
+	end if;
+
+	// it wasn't finite, so we pick something with coefficients in [-100..100]
+	bas := Basis(alg);
+	Xv := randvec(#bas);
+	return &+[Xv[i]*bas[i] : i in [1..#bas]];
+end function;

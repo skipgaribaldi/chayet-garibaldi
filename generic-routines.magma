@@ -1,0 +1,80 @@
+///////////////////////////////////////////////////////////////
+//
+// Generic functions for us in all sorts of Magma programs
+//
+// version of 5/14/2020
+//
+/////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////
+//
+// report the version of Magma being used
+//
+/////////////////////////////////////////////////////////////////
+procedure PrintVersion();
+	x,y,z := GetVersion();
+	printf "Running Magma V%o.%o-%o\n", x, y, z;
+end procedure;
+
+/////////////////////////////////////////////////////////////////
+//
+// print a line of text in a box, for breaking output up into sections
+//
+/////////////////////////////////////////////////////////////////
+procedure section(headline);
+	len := Max(#headline + 2, 70);
+	header := "+" cat "-"^len cat "+";
+
+	if #headline lt 68 then
+		headline cat:= " "^(68-#headline);
+	end if;
+
+	printf "\n";
+	print header;
+	printf "| " cat headline cat " |\n";
+	print header;
+	// printf "\n";
+end procedure;
+
+/////////////////////////////////////////////////////////////////
+//
+// input: 
+//		t = real number of seconds
+// returns:
+//		string representing t in a human-readable way
+//
+/////////////////////////////////////////////////////////////////
+function print_time(t);
+	if t le 60 then
+		return Sprintf("%o seconds", t);
+	end if;
+
+	if t le 60*60 then
+		return Sprintf("%o minutes", t/60.0);
+	end if;
+
+	if t le 3600*24 then
+		return Sprintf("%o hours", t/36000.0);
+	end if;
+
+	if t le 3600*24*365 then
+		return Sprintf("%o days", t/(3600*24));
+	end if;
+
+	return Sprintf("%o years", t/(3600*24*365));
+end function;
+
+
+SetColumns(0); // turn off automatic word wrapping of output
+
+PrintVersion(); // print the version of Magma that is running
+
+indent_space := " "^4; // how far to indent indented messages
+info_str := "... "; // how to preface informational strings
+warn_str := "---> "; // how to preface warning strings
+error_str := "---> ERROR ---> "; // preface for an error string
+
+info_prefix := indent_space cat info_str;
+warn_prefix := indent_space cat warn_str;
+error_prefix := indent_space cat error_str;
