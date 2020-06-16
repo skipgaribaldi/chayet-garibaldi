@@ -298,3 +298,19 @@ if construction eq 2 then
 	assert a^2 eq K(X,X) * a;
 end if;
 
+
+// what is the matrix for left multiplication by a ?
+function Lmatrix(a);
+	P := Parent(a);
+
+	rows := [Eltseq(a*b) : b in Basis(P)];
+	return Matrix(F, rows);
+end function;
+
+// the reduced trace, meaning trace divided by the dimension 
+function Trd(a);
+	return Trace(Lmatrix(a))/exp_dim;
+end function;
+
+
+

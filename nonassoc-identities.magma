@@ -62,11 +62,11 @@ function AllProds(len);
 end function;
 
 // list all the commutative, non-associative monomials of a given degree
-procedure showids(max_deg);
+// 		show = boolean about whether or not to print
+function showids(max_deg : show := true);
+	all_ids := [];
 	for i in [0..max_deg] do
 		ids := AllProds(i);
-		print "**** Degree ", i;
-		print "Found ", #ids, " monomials of degree ", i; 
 
 		// compare https://oeis.org/A001190
 		vals := [ 1, 1, 1, 2, 3, 6, 11, 23, 46, 98, 207, 451, 983, 2179, 4850, 10905, 24631, 56011, 127912, 293547, 676157, 1563372, 3626149, 8436379, 19680277 ];
@@ -74,10 +74,18 @@ procedure showids(max_deg);
 			assert vals[i] eq #ids;
 		end if;
 
-		print ids;
-		print "\n";
+		if show then
+			print "**** Degree ", i;
+			print "Found ", #ids, " monomials of degree ", i; 
+			print ids;
+			print "\n";
+		end if;
+
+		all_ids cat:= ids;
 	end for;
-end procedure;
+
+	return all_ids;
+end function;
 
 // evaluate the monomials and return: are they independent?, matrix of values
 // arguments: e = identity, x = some other element, ids = list of mononmials to evaluate
