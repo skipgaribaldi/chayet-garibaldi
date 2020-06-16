@@ -3,8 +3,8 @@
 // Magma code for computing the algebra A(g) for g a simple Lie algebra
 //
 //     in support of a paper by Maurice Chayet & Skip Garibaldi
+//     https://arxiv.org/abs/2005.07618
 //
-// version of 5/14/2020
 //
 // Expect to have defined:
 //    KC = string, the Killing-Cartan type of the Lie algebra g, e.g., "G2" or "D4"
