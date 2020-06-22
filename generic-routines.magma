@@ -55,7 +55,7 @@ function print_time(t);
 	end if;
 
 	if t le 3600*24 then
-		return Sprintf("%o hours", t/36000.0);
+		return Sprintf("%o hours", t/3600.0);
 	end if;
 
 	if t le 3600*24*365 then
