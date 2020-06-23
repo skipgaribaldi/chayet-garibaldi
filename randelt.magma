@@ -25,3 +25,37 @@ function randelt(alg);
 	Xv := randvec(#bas);
 	return &+[Xv[i]*bas[i] : i in [1..#bas]];
 end function;
+
+// reports whether an algebra appears to be Jordan
+function IsJordan(A);
+	if not(IsCommutative(A)) then
+		return false;
+	end if;
+
+	for i in [1..10] do
+		x := randelt(A);
+		y := randelt(A);
+		if (x^2*(x*y) ne x*(x^2*y)) then
+			return false;
+		end if;
+	end for;
+
+	return true;
+end function;
+
+// reports whether an algebra appears to be power-associative
+//
+// we only check the degree 4 property
+// if A is commutative and the characteristic of the field is
+// not 2, 3, 5, then x^4 = (x^2)^2 is equivalent to A being
+// strictly power-associative (by Albert and Kokoris)
+function IsPA(A);
+	for i in [1..10] do
+		x := randelt(A);
+		if x^4 ne x^2*x^2 then
+			return false;
+		end if;
+	end for;
+
+	return true;
+end function;
