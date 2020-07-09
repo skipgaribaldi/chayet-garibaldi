@@ -29,9 +29,6 @@ load "dual-coxeter.magma"; // dual Coxeter number and other data
 // check that KC, etc., meet some basic criteria
 key := KC;  // a common typo
 
-// check the characteristic hypothesis from the paper
-assert (Characteristic(F) eq 0) or (Characteristic(F) gt h_array[key] + 1);
-
 if construction eq 2 then
 	assert KC in ["A2", "G2", "F4", "E6", "E7"]; // See Proposition 9.4
 end if;
@@ -39,9 +36,24 @@ end if;
 printf "g is a simple Lie algebra of type %o over the %o\n", key, F;
 g := LieAlgebra(key, F : Isogeny := "SC"); 
 R := RootDatum(g);
-hv := hvee_array[key];
+
+key_family := KC[1];
+key_rank := Rank(R);
+hv := hvee_function(key_family, key_rank);
 hvee := hv; // common typo
-exp_dim := exp_dim_array[key] +1; // expected dimension of the constructed algebra A(g)
+
+// check the characteristic hypothesis from the paper
+assert (Characteristic(F) eq 0) or (Characteristic(F) gt h_function(key_family, key_rank)+ 1);
+
+function calc_exp_dim(R);	
+	a := AdjointRepresentationDecomposition(R);
+	wt := Weights(a)[1];
+	two_hst := LieRepresentationDecomposition(R, 2*wt);
+	sp := SymmetricPower(a, 2);
+	return Integers()!(RepresentationDimension(sp) - RepresentationDimension(two_hst));
+end function;
+
+exp_dim := calc_exp_dim(R); // expected dimension of the constructed algebra A(g)
 
 basis := Basis(g);
 d := #basis;
@@ -75,8 +87,10 @@ end for;
 Y := randelt(g);
 assert Y eq &+[Y[i]*basis[i] : i in [1..#basis]];
 
-okubo_alpha := 5/(2*(d+2));
-assert Trace(ad(X)^4) eq okubo_alpha * K(X,X)^2;
+if key in ["A1", "A2", "G2", "D4", "F4", "E6", "E7", "E8"] then
+	okubo_alpha := 5/(2*(d+2));
+	assert Trace(ad(X)^4) eq okubo_alpha * K(X,X)^2;
+end if;
 // ---------
 
 
@@ -186,7 +200,7 @@ checkpoint := Realtime();
 for i in [1..d] do
 	for j in [i..d] do
 		new_elt := [* i, j, S(basis[i], basis[j]) *];
-		if new_elt[3] ne ZeroMatrix(F, d_pi, d_pi) then   // if you get the zero matrix, ignore it
+		if not(IsZero(new_elt[3])) then   // if you get the zero matrix, ignore it
 			Append(~elts, new_elt);
 		end if;
 	end for;
@@ -312,5 +326,11 @@ function Trd(a);
 	return Trace(Lmatrix(a))/exp_dim;
 end function;
 
-
+// we can furthermore verify Example 4.9, that squares of elements are idempotents
+H := randelt(g);
+KH := K(H,H);
+if KH ne 0 then
+	u := EndVpiToA(S(H,H))/KH;
+	assert u * u eq u;
+end if;
 

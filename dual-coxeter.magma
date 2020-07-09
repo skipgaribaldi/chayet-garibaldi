@@ -4,37 +4,51 @@
 //
 //     in support of a paper by Maurice Chayet & Skip Garibaldi
 //
-// version of 5/14/2020
+// version of 7/9/2020
 //
 /////////////////////////////////////////////////////////////////
 
-// all types considered here, some loops will iterate over this list
-keys := ["A2", "G2", "F4", "E6", "E7", "E8"];
-
 // ------------------------------------------
 // dual Coxeter number
-hvee_array := AssociativeArray(); 
+function hvee_function(family, rk);
+    if family in ["A", "C"] then
+        return rk + 1;
+    elif family eq "B" then
+        return 2*rk - 1;
+    elif family eq "D" then
+        return 2*rk - 2;
+    elif family eq "E" then
+        if rk eq 6 then 
+            return 12;
+        elif rk eq 7 then 
+            return 18;
+        elif rk eq 8 then 
+            return 30;
+        end if;
+    elif family eq "F" and rk eq 4 then 
+        return 9;
+    elif family eq "G" and rk eq 2 then 
+        return 4;
+    end if;
 
-hvee_array["A2"] := 3;
-hvee_array["G2"] := 4;
-hvee_array["D4"] := 2*4 - 2;
-hvee_array["F4"] := 9;
-hvee_array["E6"] := 12;
-hvee_array["E7"] := 18;
-hvee_array["E8"] := 30;
-
+    return false;
+end function;
+   
 // ------------------------------------------
 // Coxeter number 
-h_array := AssociativeArray();
+function h_function(family, rk);
+    if family in ["A", "D", "E"] then
+        return hvee_function(family, rk);  // for simply laced root systems h = hvee
+    elif family in ["B", "C"] then
+        return 2*rk;
+    elif family eq "F" and rk eq 4 then 
+        return 12;
+    elif family eq "G" and rk eq 2 then 
+        return 6;
+    end if;
 
-h_array["G2"] := 6;
-h_array["F4"] := 12;
-
-// ... if all roots are the same length, then hvee = h
-for key in ["A2", "D4", "E6", "E7", "E8"] do
-	h_array[key] := hvee_array[key];
-end for;
-
+    return false;
+end function;
 
 // A(g)/k is irreducible with highest weight beta
 beta := AssociativeArray();
@@ -60,21 +74,5 @@ pid["A2"] := [0,1];
 pid["E6"] := [0,0,0,0,0,1];
 for key in ["G2", "F4", "E7", "E8"] do
 	pid[key] := pi_array[key];
-end for;
-
-// dimension of the irrep with highest weight beta
-exp_dim_array := AssociativeArray();
-exp_dim_array["A2"] := 8;
-exp_dim_array["G2"] := 27;
-exp_dim_array["D4"] := 105; // actually a sum of three irreps
-exp_dim_array["F4"] := 324;
-exp_dim_array["E6"] := 650;
-exp_dim_array["E7"] := 1539;
-exp_dim_array["E8"] := 3875;
-
-// the parameter nu from Deligne-Gross 2002
-DG_nu := AssociativeArray();
-for key in keys do
-	DG_nu[key] := hvee_array[key]/6;
 end for;
 
