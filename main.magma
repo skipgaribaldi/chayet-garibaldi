@@ -334,3 +334,14 @@ if KH ne 0 then
 	assert u * u eq u;
 end if;
 
+// project onto the kernel of the counit
+// A = algebra
+// counit = counit for the algebra
+// x = element to project
+function pr_counit(A, counit, x);
+	rval := x - counit(x)*One(A);
+	assert IsZero(counit(rval));
+	return rval;
+end function;
+
+
