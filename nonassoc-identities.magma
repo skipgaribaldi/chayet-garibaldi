@@ -6,7 +6,7 @@
 //
 //     in support of a paper by Maurice Chayet & Skip Garibaldi
 //
-// version of 5/14/2020
+// version of 6/23/2020
 //
 /////////////////////////////////////////////////////////////////
 
@@ -120,5 +120,20 @@ end function;
 function check_ids_deg(e, x, deg);
 	print "Checking degree = ", deg;
 	return check_ids1(e, x, AllProds(deg));
+end function;
+
+// check for identities involving all monomials up to some degree
+function check_ids(e, x, max_deg);
+	ids := [ "e", "x"];
+	rval := false;
+	for deg in [2..max_deg] do
+		if not(rval) then
+			print "Checking degree ", deg;
+		end if;
+		ids := ids cat AllProds(deg);
+		rval := rval or check_ids1(e, x, ids); // this short circuits if rval is already true ?
+	end for;
+
+	return rval;
 end function;
 
